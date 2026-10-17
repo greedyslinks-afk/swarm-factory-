@@ -1,0 +1,7 @@
+{
+  "name": "Haikus for Mona",
+  "description": "Some of the best haikus you'll ever read about our rescue dog June",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
