@@ -1,0 +1,161 @@
+{
+  "entities": {
+    "deliberation": {
+      "title": "Swarm Factory Execution Run",
+      "description": "An autonomous multi-agent workflow execution session in the Swarm Factory",
+      "type": "object",
+      "properties": {
+        "topic": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "The prompt or objective executed by the Swarm Factory"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "concluded", "voting"],
+          "description": "Current lifecycle state of the swarm run"
+        },
+        "consensusScore": {
+          "type": "number",
+          "description": "Swarm confidence / throughput metric from 0 to 100"
+        },
+        "activeSigns": {
+          "type": "number",
+          "description": "Number of active swarm agent nodes participating"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Server ISO timestamp when run was opened"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Server ISO timestamp of latest agent contribution"
+        }
+      },
+      "required": ["topic", "status", "createdAt"]
+    },
+    "councilSpeech": {
+      "title": "Swarm Agent Telemetry Output",
+      "description": "An autonomous execution log or output from a Swarm Factory agent node",
+      "type": "object",
+      "properties": {
+        "deliberationId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "ID of parent swarm execution session"
+        },
+        "signId": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Swarm agent identifier"
+        },
+        "signName": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Swarm agent display name"
+        },
+        "element": {
+          "type": "string",
+          "enum": ["Fire", "Earth", "Air", "Water", "AI", "Spatial", "Security", "Cloud"],
+          "description": "Agent domain specialization"
+        },
+        "statement": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Synthesized agent output or telemetry payload"
+        },
+        "reasoning": {
+          "type": "string",
+          "maxLength": 3000,
+          "description": "Architectural rationale and execution trace"
+        },
+        "stance": {
+          "type": "string",
+          "enum": ["propose", "challenge", "synthesize", "affirm", "abstain"],
+          "description": "Execution posture"
+        },
+        "vote": {
+          "type": "string",
+          "enum": ["aye", "nay", "abstain", "pending"],
+          "description": "Validation status"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Server timestamp of output"
+        }
+      },
+      "required": ["deliberationId", "signId", "signName", "statement", "timestamp"]
+    },
+    "swarmAgent": {
+      "title": "Swarm Factory Agent Node",
+      "description": "Metadata, domain specialization, and live state for a Swarm Factory orbital node",
+      "type": "object",
+      "properties": {
+        "signId": {
+          "type": "string",
+          "maxLength": 32,
+          "description": "Unique key for the orbital agent node"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Agent node name"
+        },
+        "element": {
+          "type": "string",
+          "enum": ["Fire", "Earth", "Air", "Water", "AI", "Spatial", "Security", "Cloud"],
+          "description": "Domain category"
+        },
+        "modality": {
+          "type": "string",
+          "enum": ["Cardinal", "Fixed", "Mutable", "Autonomous", "Reactive", "Orchestrator"],
+          "description": "Execution mode"
+        },
+        "archetype": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Core engineering role in Swarm Factory"
+        },
+        "voiceProfile": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Acoustic telemetry profile"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["idle", "speaking", "deliberating", "attuned"],
+          "description": "Real-time state in the Spatial Orbit Hub"
+        },
+        "lastPrompt": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Custom prompt sent directly to this Swarm Factory agent"
+        },
+        "lastResponse": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Autonomous response from this agent to the custom prompt"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Server ISO timestamp of latest agent state update"
+        }
+      },
+      "required": ["signId", "name", "element", "archetype"]
+    }
+  },
+  "firestore": {
+    "/deliberations/{deliberationId}": {
+      "schema": { "$ref": "#/entities/deliberation" },
+      "description": "Swarm Factory execution sessions and benchmark runs"
+    },
+    "/deliberations/{deliberationId}/speeches/{speechId}": {
+      "schema": { "$ref": "#/entities/councilSpeech" },
+      "description": "Agent outputs within a Swarm Factory execution session"
+    },
+    "/agents/{agentId}": {
+      "schema": { "$ref": "#/entities/swarmAgent" },
+      "description": "Live state and custom prompt telemetry for each Swarm Factory orbital node"
+    }
+  }
+}

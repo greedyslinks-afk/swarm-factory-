@@ -1,7 +1,11 @@
 {
-  "name": "Haikus for Mona",
-  "description": "Some of the best haikus you'll ever read about our rescue dog June",
+  "name": "Swarm Factory",
+  "description": "Swarm Factory & GreedysLinks AI Developers Portfolio by Founder & AI Architect Jose Marin. Spatial Orbit Hub, AstroGuitar AI, DPSS SentinelDrive, and Studio AI Workbench powered by Firebase.",
   "capabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ],
+  "requestFramePermissions": []
 }

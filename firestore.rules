@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidElement(elem) {
+      return elem in ['Fire', 'Earth', 'Air', 'Water', 'AI', 'Spatial', 'Security', 'Cloud'];
+    }
+
+    function isValidDeliberationStatus(s) {
+      return s in ['active', 'concluded', 'voting'];
+    }
+
+    function isValidDeliberation(d) {
+      return d.keys().hasAll(['topic', 'status', 'createdAt'])
+        && d.keys().hasOnly(['topic', 'status', 'consensusScore', 'activeSigns', 'createdAt', 'updatedAt'])
+        && d.topic is string && d.topic.size() > 0 && d.topic.size() <= 500
+        && isValidDeliberationStatus(d.status)
+        && d.createdAt is string && d.createdAt.size() <= 64
+        && (!('consensusScore' in d) || (d.consensusScore is number && d.consensusScore >= 0 && d.consensusScore <= 100))
+        && (!('activeSigns' in d) || (d.activeSigns is number && d.activeSigns >= 0 && d.activeSigns <= 12))
+        && (!('updatedAt' in d) || (d.updatedAt is string && d.updatedAt.size() <= 64));
+    }
+
+    function isValidSpeech(s) {
+      return s.keys().hasAll(['deliberationId', 'signId', 'signName', 'statement', 'timestamp'])
+        && s.keys().hasOnly(['deliberationId', 'signId', 'signName', 'element', 'statement', 'reasoning', 'stance', 'vote', 'timestamp'])
+        && s.deliberationId is string && isValidId(s.deliberationId)
+        && s.signId is string && s.signId.size() <= 32
+        && s.signName is string && s.signName.size() <= 64
+        && s.statement is string && s.statement.size() > 0 && s.statement.size() <= 2000
+        && s.timestamp is string && s.timestamp.size() <= 64
+        && (!('element' in s) || isValidElement(s.element))
+        && (!('reasoning' in s) || (s.reasoning is string && s.reasoning.size() <= 3000))
+        && (!('stance' in s) || (s.stance in ['propose', 'challenge', 'synthesize', 'affirm', 'abstain']))
+        && (!('vote' in s) || (s.vote in ['aye', 'nay', 'abstain', 'pending']));
+    }
+
+    function isValidAgent(a) {
+      return a.keys().hasAll(['signId', 'name', 'element', 'archetype'])
+        && a.keys().hasOnly(['signId', 'name', 'element', 'modality', 'archetype', 'voiceProfile', 'status', 'lastPrompt', 'lastResponse', 'updatedAt'])
+        && a.signId is string && a.signId.size() <= 32
+        && a.name is string && a.name.size() <= 64
+        && isValidElement(a.element)
+        && a.archetype is string && a.archetype.size() <= 100
+        && (!('modality' in a) || (a.modality in ['Cardinal', 'Fixed', 'Mutable', 'Autonomous', 'Reactive', 'Orchestrator']))
+        && (!('voiceProfile' in a) || (a.voiceProfile is string && a.voiceProfile.size() <= 64))
+        && (!('status' in a) || (a.status in ['idle', 'speaking', 'deliberating', 'attuned']))
+        && (!('lastPrompt' in a) || (a.lastPrompt is string && a.lastPrompt.size() <= 500))
+        && (!('lastResponse' in a) || (a.lastResponse is string && a.lastResponse.size() <= 2000))
+        && (!('updatedAt' in a) || (a.updatedAt is string && a.updatedAt.size() <= 64));
+    }
+
+    match /deliberations/{deliberationId} {
+      allow get: if isValidId(deliberationId);
+      allow list: if resource.data.topic is string && resource.data.topic.size() <= 500;
+      allow create: if isValidId(deliberationId) && isValidDeliberation(incoming());
+      allow update: if isValidId(deliberationId)
+        && isValidDeliberation(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'consensusScore', 'activeSigns', 'updatedAt']);
+      allow delete: if false;
+
+      match /speeches/{speechId} {
+        allow get: if isValidId(deliberationId) && isValidId(speechId);
+        allow list: if resource.data.deliberationId == deliberationId;
+        allow create: if isValidId(deliberationId)
+          && isValidId(speechId)
+          && isValidSpeech(incoming())
+          && incoming().deliberationId == deliberationId
+          && exists(/databases/$(database)/documents/deliberations/$(deliberationId));
+        allow update, delete: if false;
+      }
+    }
+
+    match /agents/{agentId} {
+      allow get: if isValidId(agentId);
+      allow list: if resource.data.signId is string && resource.data.signId.size() <= 32;
+      allow create, update: if isValidId(agentId) && isValidAgent(incoming()) && incoming().signId == agentId;
+      allow delete: if false;
+    }
+  }
+}
