@@ -11,7 +11,27 @@ const app = express();
 const port = parseInt(process.env.PORT || '3000', 10);
 const host = '0.0.0.0';
 
-app.use(express.json());
+app.use(express.json());// K.R.O.N.O.S. Rate Limiting Middleware (Snape Shield Defense)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const kronosRateLimiter = (req: Request, res: Response, next: express.NextFunction) => {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute window
+  const maxRequests = 120; // 120 requests per minute
+
+  const record = rateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + windowMs });
+    return next();
+  }
+  if (record.count >= maxRequests) {
+    return res.status(429).json({ error: '[K.R.O.N.O.S.] Rate limit exceeded. Try again shortly.' });
+  }
+  record.count++;
+  next();
+};
+
+app.use(kronosRateLimiter);
 
 function getValidGeminiClient(): GoogleGenAI | null {
   const rawKey = (process.env.GEMINI_API_KEY || '').trim();
@@ -224,7 +244,7 @@ async function startServer() {
   } else {
     const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
-    app.get('*', (_req: Request, res: Response) => {
+   app.get('*', kronosRateLimiter, (req: Request, res: Response) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
